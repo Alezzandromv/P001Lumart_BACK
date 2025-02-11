@@ -13,7 +13,7 @@ const generarCodigo = async () => {
 const ProductoSchema = new mongoose.Schema({
     idProducto: { type: Number, unique: true },
     nombre: { type: String, required: true },
-    categorias: { type: [String], required: true },
+    categorias: { type: String, required: true },
     precio: { type: Number, required: true },
     estado: { type: Boolean, default: true }, // Estado como true/false
     stock: { type: Number, required: true },

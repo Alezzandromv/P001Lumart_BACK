@@ -3,17 +3,29 @@ const { validationResult } = require('express-validator');
 
 // Listar todos los productos
 exports.listarProductos = async (req, res) => {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const searchTerm = req.query.searchTerm || "";
+    const skip = (page - 1) * limit;
+  
+    let query = {};
+    if (searchTerm) {
+      query = { nombre: { $regex: searchTerm, $options: "i" } }; // Búsqueda insensible a mayúsculas
+    }
+  
     try {
-        const productos = await Producto.find();
-        res.status(200).json({ productos });
+      const productos = await Producto.find(query).skip(skip).limit(limit);
+      const total = await Producto.countDocuments(query);
+  
+      res.json({ productos, total });
     } catch (error) {
-        res.status(500).json({ message: 'Error al obtener los productos', error });
+      res.status(500).json({ error: 'Error al obtener productos' });
     }
 };
 
 // Crear un nuevo producto
 exports.crearProducto = async (req, res) => {
-    const { nombre, categorias, precio, estado, stock, und } = req.body;
+    const { nombre, categorias, precio, stock, und } = req.body;
 
     // Validar posibles errores de validación
     const errors = validationResult(req);
@@ -26,7 +38,6 @@ exports.crearProducto = async (req, res) => {
             nombre,
             categorias,
             precio,
-            estado,
             stock,
             und
         });
@@ -40,7 +51,7 @@ exports.crearProducto = async (req, res) => {
 // Actualizar un producto existente
 exports.actualizarProducto = async (req, res) => {
     const { idProducto } = req.params;
-    const { nombre, categorias, precio, estado, stock, und } = req.body;
+    const { nombre, categorias, precio, stock, und } = req.body;
 
     try {
         const producto = await Producto.findById(idProducto);
@@ -51,7 +62,6 @@ exports.actualizarProducto = async (req, res) => {
         producto.nombre = nombre || producto.nombre;
         producto.categorias = categorias || producto.categorias;
         producto.precio = precio || producto.precio;
-        producto.estado = estado !== undefined ? estado : producto.estado;
         producto.stock = stock || producto.stock;
         producto.und = und || producto.und;
 
